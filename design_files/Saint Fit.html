@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Saint Fit — PWA Mockup</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  html, body { margin: 0; padding: 0; background: #070707; color: #F5F5F5; font-family: "DM Sans", system-ui, sans-serif; }
+  * { box-sizing: border-box; }
+  /* Override design canvas background to near-black for this presentation */
+  .design-canvas { background: #070707 !important; }
+</style>
+</head>
+<body>
+<div id="root"></div>
+
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+
+<script type="text/babel" src="design-canvas.jsx"></script>
+<script type="text/babel" src="saint-fit-tokens.jsx"></script>
+<script type="text/babel" src="saint-fit-screens-a.jsx"></script>
+<script type="text/babel" src="saint-fit-screens-b.jsx"></script>
+<script type="text/babel" src="saint-fit-screens-c.jsx"></script>
+
+<script type="text/babel" data-presets="react">
+function App() {
+  // 390x844 (iPhone 14 Pro) — matches SFPhone shell
+  const W = 390, H = 844;
+  return (
+    <div data-screen-label="Saint Fit · Mockup">
+      {/* Title bar — sits above the canvas in screen-space so users always see it */}
+      <div style={{
+        position: 'fixed', top: 0, left: 0, right: 0,
+        zIndex: 50,
+        padding: '20px 28px 18px',
+        background: 'linear-gradient(to bottom, #070707 70%, rgba(7,7,7,0))',
+        pointerEvents: 'none',
+        display: 'flex', alignItems: 'baseline', gap: 16,
+      }}>
+        <span style={{
+          fontFamily: SF.display, fontSize: 28, color: '#fff', letterSpacing: 3,
+        }}>SAINT FIT</span>
+        <span style={{
+          fontFamily: SF.body, fontSize: 12, color: '#888', letterSpacing: 0.5,
+        }}>
+          PWA Academia · Saint Simon Torre 02 · Design System v1
+        </span>
+      </div>
+
+      <DesignCanvas>
+        <DCSection id="onboard" title="Setup & Daily" subtitle="01–03 · entrar, ver o dia, treinar">
+          <DCArtboard id="s1" label="01 · Onboarding" width={W} height={H}>
+            <Screen1_Onboarding/>
+          </DCArtboard>
+          <DCArtboard id="s2" label="02 · Home" width={W} height={H}>
+            <Screen2_Home/>
+          </DCArtboard>
+          <DCArtboard id="s3" label="03 · Treino do Dia" width={W} height={H}>
+            <Screen3_Workout/>
+          </DCArtboard>
+        </DCSection>
+
+        <DCSection id="library" title="Library & Profile" subtitle="04–06 · seus planos, equipamentos, perfil">
+          <DCArtboard id="s4" label="04 · Planos" width={W} height={H}>
+            <Screen4_Plans/>
+          </DCArtboard>
+          <DCArtboard id="s5" label="05 · Equipamentos" width={W} height={H}>
+            <Screen5_Equipment/>
+          </DCArtboard>
+          <DCArtboard id="s6" label="06 · Perfil" width={W} height={H}>
+            <Screen6_Profile/>
+          </DCArtboard>
+        </DCSection>
+
+        <DCSection id="gamif" title="Gamification & Rewards" subtitle="07–09 · progresso e celebrações">
+          <DCArtboard id="s7" label="07 · Gamificação" width={W} height={H}>
+            <Screen7_Progress/>
+          </DCArtboard>
+          <DCArtboard id="s8" label="08 · Level Up" width={W} height={H}>
+            <Screen8_LevelUp/>
+          </DCArtboard>
+          <DCArtboard id="s9" label="09 · Badge" width={W} height={H}>
+            <Screen9_Badge/>
+          </DCArtboard>
+        </DCSection>
+      </DesignCanvas>
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
+</script>
+</body>
+</html>

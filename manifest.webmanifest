@@ -1,0 +1,16 @@
+{
+  "name": "Saint Fit",
+  "short_name": "Saint Fit",
+  "description": "Academia Saint Simon",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#0F0F0F",
+  "theme_color": "#7B2FBE",
+  "orientation": "portrait",
+  "lang": "pt-BR",
+  "icons": [
+    { "src": "./icons/icon.svg", "sizes": "any", "type": "image/svg+xml" },
+    { "src": "./icons/icon-maskable.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "maskable" }
+  ]
+}

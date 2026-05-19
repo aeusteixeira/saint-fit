@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <!-- Maskable icon: safe zone is the central 80% (~410px). Background fills entire square. -->
+  <rect width="512" height="512" fill="#7B2FBE"/>
+  <text x="256" y="340"
+        text-anchor="middle"
+        font-family="'Bebas Neue', Impact, sans-serif"
+        font-size="240"
+        font-weight="400"
+        fill="#FFFFFF"
+        letter-spacing="6">SF</text>
+</svg>

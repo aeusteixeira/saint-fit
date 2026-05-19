@@ -1,0 +1,66 @@
+:root {
+  /* Cores */
+  --sf-bg:            #0F0F0F;
+  --sf-surface:       #1A1A1A;
+  --sf-surface-alt:   #141414;
+  --sf-primary:       #7B2FBE;
+  --sf-primary-dim:   #4A1B73;
+  --sf-primary-soft:  rgba(123, 47, 190, 0.16);
+  --sf-secondary:     #2ECC71;
+  --sf-secondary-dim: #1F8A4D;
+  --sf-secondary-soft:rgba(46, 204, 113, 0.14);
+  --sf-accent:        #F0A500;
+  --sf-accent-soft:   rgba(240, 165, 0, 0.14);
+  --sf-text:          #F5F5F5;
+  --sf-text-muted:    #888888;
+  --sf-text-dim:      #5A5A5A;
+  --sf-border:        #2A2A2A;
+  --sf-border-strong: #3A3A3A;
+  --sf-danger:        #E63946;
+  --sf-blue:          #3A86FF;
+  --sf-orange:        #FF6B35;
+
+  /* Cores de nível */
+  --sf-level-1: #888888;
+  --sf-level-2: #2D6A4F;
+  --sf-level-3: #2ECC71;
+  --sf-level-4: #3A86FF;
+  --sf-level-5: #7B2FBE;
+  --sf-level-6: #F0A500;
+  --sf-level-7: #FF6B35;
+  --sf-level-8: #E63946;
+
+  /* Tipografia */
+  --sf-display: "Bebas Neue", "Oswald", Impact, sans-serif;
+  --sf-body:    "DM Sans", "Inter", system-ui, -apple-system, sans-serif;
+
+  /* Espaçamento (múltiplos de 4) */
+  --sf-space-1:  4px;
+  --sf-space-2:  8px;
+  --sf-space-3:  10px;
+  --sf-space-4:  12px;
+  --sf-space-5:  14px;
+  --sf-space-6:  16px;
+  --sf-space-7:  18px;
+  --sf-space-8:  20px;
+  --sf-space-9:  22px;
+  --sf-space-10: 24px;
+  --sf-space-12: 28px;
+
+  /* Border radius */
+  --sf-radius-sm:    6px;
+  --sf-radius-md:    12px;
+  --sf-radius-lg:    14px;
+  --sf-radius-xl:    16px;
+  --sf-radius-2xl:   18px;
+  --sf-radius-3xl:   22px;
+  --sf-radius-modal: 24px;
+  --sf-radius-pill:  999px;
+
+  /* Safe areas (iOS) */
+  --sf-safe-top:    env(safe-area-inset-top, 0px);
+  --sf-safe-bottom: env(safe-area-inset-bottom, 0px);
+
+  /* Bottom nav */
+  --sf-nav-height: 78px;
+}
