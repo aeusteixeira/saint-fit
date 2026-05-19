@@ -1,11 +1,20 @@
 // Saint Fit — service worker (offline shell).
-const CACHE = 'saintfit-shell-v4';
+//
+// Estratégia:
+//   - HTML/JS/CSS  → network-first. Sempre busca o novo; cai pro cache só offline.
+//                    Garante que deploys novos aparecem no próximo reload sem
+//                    precisar bumpar manualmente a versão do cache a cada push.
+//   - Imagens/fontes → cache-first. Não mudam, vale priorizar velocidade.
+//
+// Quando precisar invalidar tudo (ex: mudou estrutura do manifest), bump CACHE.
+const CACHE = 'saintfit-shell-v5';
 const SHELL = [
   './',
   './index.html',
   './manifest.webmanifest',
   './icons/icon.svg',
   './icons/icon-maskable.svg',
+  // Imagens de equipamentos
   './assets/equipment/cable-crossover.png',
   './assets/equipment/leg-machine.png',
   './assets/equipment/bench.png',
@@ -14,10 +23,13 @@ const SHELL = [
   './assets/equipment/resistance-bands.png',
   './assets/equipment/treadmill.jpg',
   './assets/equipment/bike.jpg',
+  './assets/equipment/colchonete.webp',
+  // CSS
   './styles/tokens.css',
   './styles/base.css',
   './styles/components.css',
   './styles/screens.css',
+  // JS
   './js/app.js',
   './js/router.js',
   './js/state.js',
@@ -27,6 +39,8 @@ const SHELL = [
   './js/plan-generator.js',
   './js/progress-engine.js',
   './js/equipment-catalog.js',
+  './js/exercise-videos.js',
+  './js/pwa-install.js',
   './js/screens/home.js',
   './js/screens/workout.js',
   './js/screens/progress.js',
@@ -51,29 +65,48 @@ self.addEventListener('activate', (event) => {
   );
 });
 
+// Network-first: tenta rede, atualiza cache, cai pro cache se falhar.
+function networkFirst(req) {
+  return fetch(req)
+    .then((res) => {
+      if (res && res.ok) {
+        const copy = res.clone();
+        caches.open(CACHE).then((c) => c.put(req, copy));
+      }
+      return res;
+    })
+    .catch(() =>
+      caches.match(req).then((hit) => hit || caches.match('./index.html'))
+    );
+}
+
+// Cache-first: serve do cache se tiver; senão busca e cacheia.
+function cacheFirst(req) {
+  return caches.match(req).then((hit) =>
+    hit || fetch(req).then((res) => {
+      if (res && res.ok) {
+        const copy = res.clone();
+        caches.open(CACHE).then((c) => c.put(req, copy));
+      }
+      return res;
+    }).catch(() => hit)
+  );
+}
+
 self.addEventListener('fetch', (event) => {
   const req = event.request;
   if (req.method !== 'GET') return;
   const url = new URL(req.url);
 
+  // Same-origin: HTML/JS/CSS via network-first; imagens via cache-first.
   if (url.origin === self.location.origin) {
-    event.respondWith(
-      caches.match(req).then((hit) => hit || fetch(req).then((res) => {
-        const copy = res.clone();
-        if (res.ok) caches.open(CACHE).then((c) => c.put(req, copy));
-        return res;
-      }).catch(() => caches.match('./index.html')))
-    );
+    const isCode = /\.(?:js|css|html|webmanifest)$/.test(url.pathname) || url.pathname === '/' || url.pathname.endsWith('/');
+    event.respondWith(isCode ? networkFirst(req) : cacheFirst(req));
     return;
   }
 
+  // Google Fonts — cache-first (raramente mudam).
   if (url.host === 'fonts.googleapis.com' || url.host === 'fonts.gstatic.com') {
-    event.respondWith(
-      caches.match(req).then((hit) => hit || fetch(req).then((res) => {
-        const copy = res.clone();
-        if (res.ok) caches.open(CACHE).then((c) => c.put(req, copy));
-        return res;
-      }).catch(() => caches.match(req)))
-    );
+    event.respondWith(cacheFirst(req));
   }
 });
