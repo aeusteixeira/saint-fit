@@ -123,12 +123,21 @@ export function clearSession(workoutId) {
 export function startSession(workout) {
   const existing = getSession(workout.id);
   if (existing && existing.completed.length === workout.exercises.length) {
+    // Migra sessions antigas que não têm setsDone — defensivo.
+    existing.completed.forEach(c => {
+      if (typeof c.setsDone !== 'number') c.setsDone = c.done ? Infinity : 0;
+    });
     return existing;
   }
   const session = {
     workoutId: workout.id,
     date: new Date().toISOString(),
-    completed: workout.exercises.map(ex => ({ exerciseId: ex.id, weight: null, done: false })),
+    completed: workout.exercises.map(ex => ({
+      exerciseId: ex.id,
+      weight: null,
+      done: false,
+      setsDone: 0,
+    })),
   };
   setSession(workout.id, session);
   return session;
