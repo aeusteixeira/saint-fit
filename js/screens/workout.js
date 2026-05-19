@@ -102,17 +102,40 @@ export function renderWorkout(root) {
 function renderGuidedMode(root, ctx) {
   const { workout, session } = ctx;
 
-  // UI state local (não persiste — descanso é em-sessão)
+  // UI state local (não persiste — descanso/expansão é em-sessão)
   const ui = {
     isResting: false,
     restEndsAt: 0,
     restIntervalId: null,
     restJustFinished: false,
+    currentIndexOverride: null, // se set, sobrescreve auto-detect (jump entre exercícios)
+    showAllExercises: false,    // painel expansível com lista completa
   };
 
-  function currentIndex() {
+  function autoCurrentIndex() {
     const idx = session.completed.findIndex(c => c.setsDone < workout.exercises.find(e => e.id === c.exerciseId).sets);
     return idx < 0 ? workout.exercises.length - 1 : idx;
+  }
+  function currentIndex() {
+    if (ui.currentIndexOverride != null) return ui.currentIndexOverride;
+    return autoCurrentIndex();
+  }
+  function jumpToExercise(idx) {
+    ui.currentIndexOverride = idx;
+    ui.showAllExercises = false;
+    fullRender();
+  }
+  function toggleExerciseList() {
+    ui.showAllExercises = !ui.showAllExercises;
+    fullRender();
+  }
+  function exerciseStatus(idx) {
+    const c = session.completed[idx];
+    const ex = workout.exercises[idx];
+    if (!c || !ex) return 'pending';
+    if (c.setsDone >= ex.sets) return 'done';
+    if (idx === currentIndex()) return 'current';
+    return 'pending';
   }
 
   function isAllDone() {
@@ -186,6 +209,7 @@ function renderGuidedMode(root, ctx) {
     entry.setsDone = Math.min(ex.sets, entry.setsDone + 1);
     if (entry.setsDone >= ex.sets) {
       entry.done = true;
+      ui.currentIndexOverride = null; // exercício terminado, libera auto-detect
     }
     persist();
 
@@ -200,6 +224,7 @@ function renderGuidedMode(root, ctx) {
   }
 
   function goNextExercise() {
+    ui.currentIndexOverride = null;
     ui.restJustFinished = false;
     fullRender();
   }
@@ -255,6 +280,7 @@ function renderGuidedMode(root, ctx) {
       <div class="workout-progress-bar"><span style="width:${overallPct}%"></span></div>
 
       <div class="screen screen--guided">
+        ${renderExercisesPanel(workout, session, idx, ui.showAllExercises)}
         ${allDone ? renderAllDoneState(workout, setsDoneTotal) : renderCurrentExerciseCard({
           ex, entry, idx, total, nextEx, exerciseFullyDone, videoUrl,
         })}
@@ -325,6 +351,15 @@ function renderGuidedMode(root, ctx) {
 
     root.querySelector('[data-action="next-exercise"]')?.addEventListener('click', goNextExercise);
 
+    root.querySelector('[data-action="toggle-list"]')?.addEventListener('click', toggleExerciseList);
+
+    root.querySelectorAll('[data-jump-ex]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const idx = parseInt(btn.dataset.jumpEx, 10);
+        if (!isNaN(idx)) jumpToExercise(idx);
+      });
+    });
+
     root.querySelector('[data-action="finish-workout"]')?.addEventListener('click', finishWorkout);
 
     // Rest overlay buttons
@@ -338,6 +373,54 @@ function renderGuidedMode(root, ctx) {
   return () => {
     if (ui.restIntervalId) clearInterval(ui.restIntervalId);
   };
+}
+
+function renderExercisesPanel(workout, session, currentIdx, isOpen) {
+  const total = workout.exercises.length;
+  const doneCount = session.completed.filter((c, i) => c.setsDone >= workout.exercises[i].sets).length;
+
+  // Mini-dots resumo (sempre visíveis no header)
+  const dots = workout.exercises.map((ex, i) => {
+    const c = session.completed[i];
+    let state = 'pending';
+    if (c.setsDone >= ex.sets) state = 'done';
+    else if (i === currentIdx) state = 'current';
+    return `<span class="ex-mini-dot ex-mini-dot--${state}"></span>`;
+  }).join('');
+
+  // Lista expandida (só renderiza se aberto pra não pesar a árvore)
+  const list = isOpen ? workout.exercises.map((ex, i) => {
+    const c = session.completed[i];
+    let state = 'pending';
+    if (c.setsDone >= ex.sets) state = 'done';
+    else if (i === currentIdx) state = 'current';
+    const num = String(i + 1).padStart(2, '0');
+    const statusLabel = state === 'done'
+      ? icon('check', { size: 13, color: '#000', strokeWidth: 3 })
+      : state === 'current'
+        ? `<span class="ex-list-item__sets">${c.setsDone}/${ex.sets}</span>`
+        : `<span class="ex-list-item__sets">${ex.sets}×</span>`;
+    return `<button type="button" class="ex-list-item ex-list-item--${state}" data-jump-ex="${i}">
+      <span class="ex-list-item__num">${num}</span>
+      <span class="ex-list-item__body">
+        <span class="ex-list-item__name">${ex.name}</span>
+        <span class="ex-list-item__equip">${ex.equipment}</span>
+      </span>
+      <span class="ex-list-item__status">${statusLabel}</span>
+    </button>`;
+  }).join('') : '';
+
+  return `<div class="exercises-panel${isOpen ? ' is-open' : ''}">
+    <button type="button" class="exercises-panel__header" data-action="toggle-list" aria-expanded="${isOpen}">
+      <div class="exercises-panel__title">
+        <span class="exercises-panel__label">Exercícios</span>
+        <span class="exercises-panel__count">${doneCount}/${total}</span>
+      </div>
+      <div class="ex-mini-dots">${dots}</div>
+      <span class="exercises-panel__chev">${icon('chevron-down', { size: 16, color: 'var(--sf-text-muted)' })}</span>
+    </button>
+    ${isOpen ? `<div class="exercises-panel__list">${list}</div>` : ''}
+  </div>`;
 }
 
 function renderCurrentExerciseCard({ ex, entry, idx, total, nextEx, exerciseFullyDone, videoUrl }) {

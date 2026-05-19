@@ -11,6 +11,7 @@ const PATHS = {
   check: '<polyline points="5 12 10 17 19 7"/>',
   'chevron-right': '<polyline points="9 6 15 12 9 18"/>',
   'chevron-left': '<polyline points="15 6 9 12 15 18"/>',
+  'chevron-down': '<polyline points="6 9 12 15 18 9"/>',
   'arrow-right': '<line x1="4" y1="12" x2="20" y2="12"/><polyline points="14 6 20 12 14 18"/>',
   lock: '<rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/>',
   flame: '<path d="M12 22c4 0 7-3 7-7 0-3-2-5-3-7-1 2-3 3-3 5 0-2-1-4-3-6-1 3-4 5-4 9 0 4 3 6 6 6z"/>',
