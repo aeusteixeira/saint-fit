@@ -182,7 +182,7 @@ function renderGuidedMode(root, ctx) {
     osc.stop(audio.currentTime + 0.42);
   }
 
-  function completeSet(ex, entry) {
+  function completeSet(ex, entry, { skipRest = false } = {}) {
     entry.setsDone = Math.min(ex.sets, entry.setsDone + 1);
     if (entry.setsDone >= ex.sets) {
       entry.done = true;
@@ -191,8 +191,7 @@ function renderGuidedMode(root, ctx) {
 
     // Próximo exercício ou descanso entre séries
     const allSetsOfExDone = entry.setsDone >= ex.sets;
-    if (allSetsOfExDone) {
-      // Sem descanso aqui — usuário clica "Próximo exercício" no botão atualizado
+    if (allSetsOfExDone || skipRest) {
       ui.restJustFinished = false;
       fullRender();
     } else {
@@ -261,7 +260,7 @@ function renderGuidedMode(root, ctx) {
         })}
       </div>
 
-      <div class="sticky-cta">
+      <div class="sticky-cta sticky-cta--stack">
         ${allDone
           ? `<button class="btn btn--success btn--lg" data-action="finish-workout">
                ${icon('check', { size: 17, color: '#fff', strokeWidth: 2.5 })}
@@ -280,7 +279,8 @@ function renderGuidedMode(root, ctx) {
             : `<button class="btn btn--success btn--lg" data-action="complete-set">
                  ${icon('check', { size: 17, color: '#fff', strokeWidth: 2.5 })}
                  Concluí ${exerciseSetsDone + 1 === exerciseTotalSets ? 'a última série' : `série ${exerciseSetsDone + 1}`}
-               </button>`}
+               </button>
+               <button class="btn-link" data-action="skip-set">Pular série</button>`}
       </div>
 
       ${ui.isResting ? renderRestOverlay(restSecLeft, ex, entry, idx, total) : ''}
@@ -314,6 +314,13 @@ function renderGuidedMode(root, ctx) {
       const ex = exerciseAt(idx);
       const entry = entryFor(ex.id);
       completeSet(ex, entry);
+    });
+
+    root.querySelector('[data-action="skip-set"]')?.addEventListener('click', () => {
+      const idx = currentIndex();
+      const ex = exerciseAt(idx);
+      const entry = entryFor(ex.id);
+      completeSet(ex, entry, { skipRest: true });
     });
 
     root.querySelector('[data-action="next-exercise"]')?.addEventListener('click', goNextExercise);

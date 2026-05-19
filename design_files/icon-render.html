@@ -1,0 +1,32 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Icon render</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body { background: transparent; overflow: hidden; }
+    .icon-host {
+      display: inline-block;
+      line-height: 0;
+    }
+    .icon-host svg { display: block; width: 100%; height: 100%; }
+  </style>
+</head>
+<body>
+  <div id="host" class="icon-host"></div>
+  <script>
+    // Lê ?src=... e ?size=... da URL, carrega o SVG e renderiza no tamanho exato.
+    const params = new URLSearchParams(location.search);
+    const src = params.get('src') || '../icons/icon.svg';
+    const size = parseInt(params.get('size') || '512', 10);
+    const host = document.getElementById('host');
+    host.style.width = size + 'px';
+    host.style.height = size + 'px';
+    fetch(src).then(r => r.text()).then(svg => {
+      host.innerHTML = svg;
+      document.title = 'ready';
+    });
+  </script>
+</body>
+</html>

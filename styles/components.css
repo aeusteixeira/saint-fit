@@ -263,6 +263,29 @@
 .sticky-cta--no-nav {
   bottom: 0;
 }
+.sticky-cta--stack {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.btn-link {
+  background: transparent;
+  border: 0;
+  color: var(--sf-text-muted);
+  font-family: var(--sf-body);
+  font-size: 13px;
+  font-weight: 600;
+  padding: 6px 12px;
+  cursor: pointer;
+  align-self: center;
+  text-decoration: underline;
+  text-decoration-color: rgba(255,255,255,0.2);
+  text-underline-offset: 3px;
+  transition: color 120ms ease;
+}
+.btn-link:hover { color: #fff; }
+.btn-link:active { transform: scale(0.96); }
 
 /* ─────────────────────────────────────────────────────────────
    Toast (XP earned, level-up summary)
