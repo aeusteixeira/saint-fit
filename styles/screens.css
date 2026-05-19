@@ -233,6 +233,11 @@
   border-color: var(--sf-primary);
   box-shadow: 0 0 0 3px rgba(123, 47, 190, 0.25);
 }
+.ex-mini-dot--skipped {
+  background: var(--sf-accent);
+  border-color: var(--sf-accent);
+  opacity: 0.7;
+}
 .exercises-panel__chev {
   display: inline-flex;
   transition: transform 200ms ease;
@@ -270,6 +275,32 @@
   border-color: rgba(123, 47, 190, 0.45);
 }
 .ex-list-item--done { opacity: 0.55; }
+.ex-list-item--skipped {
+  background: rgba(240, 165, 0, 0.06);
+  border-color: rgba(240, 165, 0, 0.25);
+}
+.ex-list-item__skip-badge {
+  display: inline-block;
+  margin-left: 6px;
+  padding: 2px 6px;
+  border-radius: 4px;
+  background: rgba(240, 165, 0, 0.18);
+  color: var(--sf-accent);
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
+  vertical-align: middle;
+}
+.ex-list-item--skipped .ex-list-item__status {
+  background: rgba(240, 165, 0, 0.18);
+  color: var(--sf-accent);
+}
+.ex-list-item--skipped .ex-list-item__sets {
+  color: var(--sf-accent);
+  font-size: 15px;
+  font-weight: 700;
+}
 .ex-list-item__num {
   font-family: var(--sf-display);
   font-size: 14px;

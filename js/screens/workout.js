@@ -113,7 +113,11 @@ function renderGuidedMode(root, ctx) {
   };
 
   function autoCurrentIndex() {
-    const idx = session.completed.findIndex(c => c.setsDone < workout.exercises.find(e => e.id === c.exerciseId).sets);
+    // Pula sobre exercícios já feitos OU explicitamente pulados.
+    const idx = session.completed.findIndex(c => {
+      const ex = workout.exercises.find(e => e.id === c.exerciseId);
+      return !c.skipped && c.setsDone < ex.sets;
+    });
     return idx < 0 ? workout.exercises.length - 1 : idx;
   }
   function currentIndex() {
@@ -121,8 +125,26 @@ function renderGuidedMode(root, ctx) {
     return autoCurrentIndex();
   }
   function jumpToExercise(idx) {
+    // Pular pra um exercício marcado como skipped reativa ele.
+    const target = session.completed[idx];
+    if (target?.skipped) {
+      target.skipped = false;
+      persist();
+    }
     ui.currentIndexOverride = idx;
     ui.showAllExercises = false;
+    fullRender();
+  }
+  function skipExercise() {
+    const idx = currentIndex();
+    const c = session.completed[idx];
+    if (!c) return;
+    c.skipped = true;
+    persist();
+    ui.currentIndexOverride = null; // libera auto-detect pra próximo
+    ui.restJustFinished = false;
+    if (ui.restIntervalId) { clearInterval(ui.restIntervalId); ui.restIntervalId = null; }
+    ui.isResting = false;
     fullRender();
   }
   function toggleExerciseList() {
@@ -139,7 +161,11 @@ function renderGuidedMode(root, ctx) {
   }
 
   function isAllDone() {
-    return session.completed.every(c => c.setsDone >= workout.exercises.find(e => e.id === c.exerciseId).sets);
+    // "Tudo endereçado": cada exercício foi concluído OU explicitamente pulado.
+    return session.completed.every(c => {
+      const ex = workout.exercises.find(e => e.id === c.exerciseId);
+      return c.skipped || c.setsDone >= ex.sets;
+    });
   }
 
   function exerciseAt(idx) {
@@ -306,7 +332,11 @@ function renderGuidedMode(root, ctx) {
                  ${icon('check', { size: 17, color: '#fff', strokeWidth: 2.5 })}
                  Concluí ${exerciseSetsDone + 1 === exerciseTotalSets ? 'a última série' : `série ${exerciseSetsDone + 1}`}
                </button>
-               <button class="btn-link" data-action="skip-set">Pular série</button>`}
+               <div class="cta-secondary-row">
+                 <button class="btn-link" data-action="skip-set">Pular série</button>
+                 <span class="cta-sep">·</span>
+                 <button class="btn-link" data-action="skip-exercise">Pular exercício →</button>
+               </div>`}
       </div>
 
       ${ui.isResting ? renderRestOverlay(restSecLeft, ex, entry, idx, total) : ''}
@@ -349,6 +379,8 @@ function renderGuidedMode(root, ctx) {
       completeSet(ex, entry, { skipRest: true });
     });
 
+    root.querySelector('[data-action="skip-exercise"]')?.addEventListener('click', skipExercise);
+
     root.querySelector('[data-action="next-exercise"]')?.addEventListener('click', goNextExercise);
 
     root.querySelector('[data-action="toggle-list"]')?.addEventListener('click', toggleExerciseList);
@@ -378,32 +410,39 @@ function renderGuidedMode(root, ctx) {
 function renderExercisesPanel(workout, session, currentIdx, isOpen) {
   const total = workout.exercises.length;
   const doneCount = session.completed.filter((c, i) => c.setsDone >= workout.exercises[i].sets).length;
+  const skippedCount = session.completed.filter(c => c.skipped).length;
+
+  function stateOf(i) {
+    const c = session.completed[i];
+    const ex = workout.exercises[i];
+    if (c.setsDone >= ex.sets) return 'done';
+    if (c.skipped) return 'skipped';
+    if (i === currentIdx) return 'current';
+    return 'pending';
+  }
 
   // Mini-dots resumo (sempre visíveis no header)
-  const dots = workout.exercises.map((ex, i) => {
-    const c = session.completed[i];
-    let state = 'pending';
-    if (c.setsDone >= ex.sets) state = 'done';
-    else if (i === currentIdx) state = 'current';
-    return `<span class="ex-mini-dot ex-mini-dot--${state}"></span>`;
-  }).join('');
+  const dots = workout.exercises.map((_, i) =>
+    `<span class="ex-mini-dot ex-mini-dot--${stateOf(i)}"></span>`
+  ).join('');
 
   // Lista expandida (só renderiza se aberto pra não pesar a árvore)
   const list = isOpen ? workout.exercises.map((ex, i) => {
     const c = session.completed[i];
-    let state = 'pending';
-    if (c.setsDone >= ex.sets) state = 'done';
-    else if (i === currentIdx) state = 'current';
+    const state = stateOf(i);
     const num = String(i + 1).padStart(2, '0');
     const statusLabel = state === 'done'
       ? icon('check', { size: 13, color: '#000', strokeWidth: 3 })
-      : state === 'current'
-        ? `<span class="ex-list-item__sets">${c.setsDone}/${ex.sets}</span>`
-        : `<span class="ex-list-item__sets">${ex.sets}×</span>`;
-    return `<button type="button" class="ex-list-item ex-list-item--${state}" data-jump-ex="${i}">
+      : state === 'skipped'
+        ? `<span class="ex-list-item__sets" title="Pulado — toque pra voltar">↩</span>`
+        : state === 'current'
+          ? `<span class="ex-list-item__sets">${c.setsDone}/${ex.sets}</span>`
+          : `<span class="ex-list-item__sets">${ex.sets}×</span>`;
+    const skipBadge = state === 'skipped' ? `<span class="ex-list-item__skip-badge">pulado</span>` : '';
+    return `<button type="button" class="ex-list-item ex-list-item--${state}" data-jump-ex="${i}" title="${state === 'skipped' ? 'Voltar pra este exercício' : ''}">
       <span class="ex-list-item__num">${num}</span>
       <span class="ex-list-item__body">
-        <span class="ex-list-item__name">${ex.name}</span>
+        <span class="ex-list-item__name">${ex.name}${skipBadge}</span>
         <span class="ex-list-item__equip">${ex.equipment}</span>
       </span>
       <span class="ex-list-item__status">${statusLabel}</span>

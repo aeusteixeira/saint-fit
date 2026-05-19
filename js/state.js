@@ -123,9 +123,10 @@ export function clearSession(workoutId) {
 export function startSession(workout) {
   const existing = getSession(workout.id);
   if (existing && existing.completed.length === workout.exercises.length) {
-    // Migra sessions antigas que não têm setsDone — defensivo.
+    // Migra sessions antigas que não têm setsDone/skipped — defensivo.
     existing.completed.forEach(c => {
       if (typeof c.setsDone !== 'number') c.setsDone = c.done ? Infinity : 0;
+      if (typeof c.skipped !== 'boolean') c.skipped = false;
     });
     return existing;
   }
@@ -137,6 +138,7 @@ export function startSession(workout) {
       weight: null,
       done: false,
       setsDone: 0,
+      skipped: false,
     })),
   };
   setSession(workout.id, session);
