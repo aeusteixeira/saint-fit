@@ -4,6 +4,7 @@ import { getProfile, getProgress, wipeAll, setPlan } from '../state.js';
 import { LEVELS } from '../progress-engine.js';
 import { generatePlan } from '../plan-generator.js';
 import { showAbout } from '../modals.js';
+import { isStandalone, isIos, canPromptInstall, promptInstall, onInstallStateChange } from '../pwa-install.js';
 
 const GOAL_LABEL = { lose: 'Emagrecer', gain: 'Ganhar massa', condition: 'Condicionamento' };
 const LEVEL_LABEL = { beginner: 'Iniciante', returning: 'Voltando', intermediate: 'Intermediário' };
@@ -15,6 +16,40 @@ function dataRow(label, value) {
     <span class="profile-row__label">${label}</span>
     <span class="profile-row__value">${value}</span>
   </div>`;
+}
+
+function installCard() {
+  if (isStandalone()) {
+    return `<div class="install-banner install-banner--installed">
+      <div class="install-banner__icon" style="background: rgba(46,204,113,0.18);">
+        ${icon('check', { size: 18, color: 'var(--sf-secondary)', strokeWidth: 2.5 })}
+      </div>
+      <div class="install-banner__body">
+        <div class="install-banner__title">App instalado</div>
+        <div class="install-banner__sub">Você já está usando o Saint Fit no modo aplicativo.</div>
+      </div>
+    </div>`;
+  }
+  if (canPromptInstall()) {
+    return `<div class="install-banner install-banner--prompt">
+      <div class="install-banner__icon">${icon('sparkle', { size: 18, color: 'var(--sf-primary)', fill: 'var(--sf-primary)' })}</div>
+      <div class="install-banner__body">
+        <div class="install-banner__title">Instale o Saint Fit</div>
+        <div class="install-banner__sub">Acesso offline, abertura rápida direto da tela inicial.</div>
+      </div>
+      <button class="install-banner__btn" data-action="install">Instalar</button>
+    </div>`;
+  }
+  if (isIos()) {
+    return `<div class="install-banner install-banner--ios">
+      <div class="install-banner__icon">📱</div>
+      <div class="install-banner__body">
+        <div class="install-banner__title">Adicione à tela de início</div>
+        <div class="install-banner__sub">Toque em <strong>Compartilhar</strong> e depois <strong>Adicionar à Tela de Início</strong>.</div>
+      </div>
+    </div>`;
+  }
+  return '';
 }
 
 export function renderProfile(root) {
@@ -80,7 +115,9 @@ export function renderProfile(root) {
       ${dataRow('Limitações',        limitations)}
     </div>
 
-    <div class="profile-actions" style="margin-top: 18px;">
+    <div class="install-card-slot" style="margin-top: 18px;">${installCard()}</div>
+
+    <div class="profile-actions" style="margin-top: 14px;">
       <button class="btn btn--outline-primary btn--md" data-action="edit">
         ${icon('edit', { size: 15, color: 'var(--sf-primary)' })}
         Editar perfil
@@ -116,4 +153,23 @@ export function renderProfile(root) {
   root.querySelector('[data-action="about"]').addEventListener('click', () => {
     showAbout();
   });
+
+  function bindInstallBtn() {
+    const btn = root.querySelector('[data-action="install"]');
+    btn?.addEventListener('click', async () => {
+      btn.disabled = true;
+      try { await promptInstall(); } finally { btn.disabled = false; }
+    });
+  }
+  bindInstallBtn();
+
+  // Re-renderiza só o card de instalação quando o estado muda (após instalar).
+  const unsubscribe = onInstallStateChange(() => {
+    const slot = root.querySelector('.install-card-slot');
+    if (!slot) return;
+    slot.innerHTML = installCard();
+    bindInstallBtn();
+  });
+
+  return () => unsubscribe();
 }

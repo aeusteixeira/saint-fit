@@ -1048,6 +1048,10 @@
   /* Sem botão — instruções textuais, então layout um pouco diferente */
   align-items: flex-start;
 }
+.install-banner--installed {
+  background: linear-gradient(135deg, rgba(46, 204, 113, 0.18) 0%, var(--sf-surface) 100%);
+  border-color: var(--sf-secondary);
+}
 .onb-field { margin-bottom: 20px; }
 .onb-field .section-label { margin-bottom: 10px; }
 

@@ -1,16 +1,52 @@
 {
-  "name": "Saint Fit",
+  "name": "Saint Fit — Treino ABC, XP e progresso",
   "short_name": "Saint Fit",
-  "description": "Academia Saint Simon",
+  "description": "PWA de treino com plano ABC personalizado, XP, streak e vídeos de execução em português. Funciona offline.",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
+  "display_override": ["standalone", "minimal-ui"],
   "background_color": "#0F0F0F",
   "theme_color": "#7B2FBE",
   "orientation": "portrait",
   "lang": "pt-BR",
+  "dir": "ltr",
+  "categories": ["health", "fitness", "lifestyle", "sports"],
   "icons": [
-    { "src": "./icons/icon.svg", "sizes": "any", "type": "image/svg+xml" },
-    { "src": "./icons/icon-maskable.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "maskable" }
+    {
+      "src": "./icons/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "./icons/icon-maskable.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Treino de hoje",
+      "short_name": "Treino",
+      "description": "Abrir o treino do dia",
+      "url": "./#/workout",
+      "icons": [{ "src": "./icons/icon.svg", "sizes": "any" }]
+    },
+    {
+      "name": "Meus treinos",
+      "short_name": "Planos",
+      "description": "Ver todos os treinos do plano ABC",
+      "url": "./#/plans",
+      "icons": [{ "src": "./icons/icon.svg", "sizes": "any" }]
+    },
+    {
+      "name": "Evolução",
+      "short_name": "Progresso",
+      "description": "XP, nível e conquistas",
+      "url": "./#/progress",
+      "icons": [{ "src": "./icons/icon.svg", "sizes": "any" }]
+    }
   ]
 }

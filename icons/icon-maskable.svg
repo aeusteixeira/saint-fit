@@ -1,11 +1,36 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
-  <!-- Maskable icon: safe zone is the central 80% (~410px). Background fills entire square. -->
-  <rect width="512" height="512" fill="#7B2FBE"/>
-  <text x="256" y="340"
-        text-anchor="middle"
-        font-family="'Bebas Neue', Impact, sans-serif"
-        font-size="240"
-        font-weight="400"
-        fill="#FFFFFF"
-        letter-spacing="6">SF</text>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Saint Fit">
+  <!-- Maskable: bg full-bleed (sem rounded), conteúdo dentro do safe zone 80% (centro 410x410). -->
+  <defs>
+    <linearGradient id="sf-bg-m" x1="15%" y1="0%" x2="85%" y2="100%">
+      <stop offset="0%" stop-color="#9D4EDD"/>
+      <stop offset="55%" stop-color="#7B2FBE"/>
+      <stop offset="100%" stop-color="#3F1366"/>
+    </linearGradient>
+    <linearGradient id="sf-metal-m" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#FFFFFF"/>
+      <stop offset="55%" stop-color="#F4E8FF"/>
+      <stop offset="100%" stop-color="#D9BFFF"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="512" height="512" fill="url(#sf-bg-m)"/>
+
+  <!-- Anel sutil dentro do safe zone -->
+  <circle cx="256" cy="256" r="180" fill="none" stroke="rgba(255,255,255,0.08)" stroke-width="2"/>
+
+  <!-- Dumbbell levemente menor pra ficar 100% dentro do safe zone -->
+  <g fill="url(#sf-metal-m)">
+    <rect x="86" y="226" width="28" height="60" rx="9"/>
+    <rect x="116" y="186" width="76" height="140" rx="20"/>
+    <rect x="192" y="246" width="128" height="20" rx="7"/>
+    <rect x="320" y="186" width="76" height="140" rx="20"/>
+    <rect x="398" y="226" width="28" height="60" rx="9"/>
+  </g>
+
+  <g fill="rgba(63,19,102,0.55)">
+    <rect x="240" y="250" width="2.5" height="12" rx="1"/>
+    <rect x="250" y="250" width="2.5" height="12" rx="1"/>
+    <rect x="260" y="250" width="2.5" height="12" rx="1"/>
+    <rect x="270" y="250" width="2.5" height="12" rx="1"/>
+  </g>
 </svg>
