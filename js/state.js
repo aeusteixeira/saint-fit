@@ -72,6 +72,27 @@ export function getTodaySessionRecord() {
   return p.sessions.find(s => typeof s.date === 'string' && s.date.slice(0, 10) === tk) || null;
 }
 
+// Último peso registrado para um exercício (busca histórico, mais recente primeiro).
+export function getLastWeight(exerciseName) {
+  const p = read(KEYS.progress);
+  for (const s of (p?.sessions || [])) {
+    const e = s.exercises?.find(x => x.name === exerciseName && x.weight != null);
+    if (e) return { weight: e.weight, date: s.date };
+  }
+  return null;
+}
+
+// Recorde pessoal (PR) — maior peso já registrado pra esse exercício.
+export function getPRWeight(exerciseName) {
+  const p = read(KEYS.progress);
+  let pr = null;
+  for (const s of (p?.sessions || [])) {
+    const e = s.exercises?.find(x => x.name === exerciseName && x.weight != null);
+    if (e && (pr == null || e.weight > pr.weight)) pr = { weight: e.weight, date: s.date };
+  }
+  return pr;
+}
+
 // ─────────────────────────────────────────────────────────────
 // Progress (XP, level, streak, badges, sessions history, XP events)
 // ─────────────────────────────────────────────────────────────

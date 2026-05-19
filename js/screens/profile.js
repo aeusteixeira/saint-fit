@@ -141,7 +141,23 @@ export function renderProfile(root) {
     window.location.hash = '#/onboarding';
   });
   root.querySelector('[data-action="regenerate"]').addEventListener('click', () => {
-    if (!confirm('Regenerar seu plano com base no perfil atual? Seu histórico será preservado.')) return;
+    // Detecta sessão em andamento (qualquer treino com setsDone > 0 e não concluído).
+    let activeSessions = [];
+    try {
+      const all = JSON.parse(localStorage.getItem('saintfit:session') || '{}');
+      activeSessions = Object.entries(all).filter(([, s]) =>
+        s?.completed?.some(c => (c.setsDone || 0) > 0 && !c.done)
+      ).map(([id]) => id);
+    } catch {}
+
+    if (activeSessions.length > 0) {
+      const msg = `Você tem treino em andamento (${activeSessions.join(', ')}). Regenerar o plano vai apagar o que você fez até agora nessa sessão. Continuar mesmo assim?`;
+      if (!confirm(msg)) return;
+    } else {
+      if (!confirm('Regenerar seu plano com base no perfil atual? Seu histórico de treinos concluídos será preservado.')) return;
+    }
+    // Limpa sessões em andamento — exercícios podem ter mudado no novo plano.
+    try { localStorage.removeItem('saintfit:session'); } catch {}
     setPlan(generatePlan(profile));
     renderProfile(root);
   });

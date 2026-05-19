@@ -257,6 +257,102 @@ export function showAbout() {
   });
 }
 
+// ─────────────────────────────────────────────────────────────
+// Workout summary modal — tela de resumo no fim do treino.
+// ─────────────────────────────────────────────────────────────
+function formatDuration(sec) {
+  if (!sec || sec < 0) return '—';
+  const h = Math.floor(sec / 3600);
+  const m = Math.floor((sec % 3600) / 60);
+  const s = sec % 60;
+  if (h > 0) return `${h}h ${m}min`;
+  if (m > 0) return `${m}min ${String(s).padStart(2, '0')}s`;
+  return `${s}s`;
+}
+
+export function showWorkoutSummary({ workout, session, result, durationSec }) {
+  return new Promise((resolve) => {
+    const totalSets = workout.exercises.reduce((s, e) => s + e.sets, 0);
+    const setsDone = session.completed.reduce((s, c) => s + (c.setsDone || 0), 0);
+    const skipped = session.completed.filter(c => c.skipped).length;
+    const exDone = session.completed.filter((c, i) => c.setsDone >= workout.exercises[i].sets).length;
+    // Volume = soma(peso × reps × séries) por exercício
+    const volume = session.completed.reduce((acc, c, i) => {
+      const ex = workout.exercises[i];
+      if (!c.weight || c.skipped) return acc;
+      const reps = typeof ex.reps === 'number' ? ex.reps : 0;
+      return acc + (c.weight * reps * c.setsDone);
+    }, 0);
+
+    const host = ensureHost();
+    const html = `<div class="modal modal--summary">
+      <div class="modal__backdrop"></div>
+      ${confettiHtml()}
+      <div class="modal__summary-card">
+        <div class="modal__summary-header">
+          <div class="modal__summary-badge">
+            ${icon('check', { size: 12, color: '#000', strokeWidth: 3 })}
+            TREINO CONCLUÍDO
+          </div>
+          <div class="modal__summary-title">TREINO ${workout.id}</div>
+          <div class="modal__summary-sub">${workout.focus}</div>
+        </div>
+
+        <div class="modal__summary-xp">
+          <span class="modal__summary-xp-num">+${result.xpEarned}</span>
+          <span class="modal__summary-xp-label">XP ganhos</span>
+        </div>
+
+        <div class="modal__summary-grid">
+          <div class="modal__summary-stat">
+            <div class="modal__summary-stat-icon">${icon('clock', { size: 16, color: 'var(--sf-text-muted)' })}</div>
+            <div class="modal__summary-stat-val">${formatDuration(durationSec)}</div>
+            <div class="modal__summary-stat-label">Tempo</div>
+          </div>
+          <div class="modal__summary-stat">
+            <div class="modal__summary-stat-icon">${icon('dumbbell', { size: 16, color: 'var(--sf-text-muted)' })}</div>
+            <div class="modal__summary-stat-val">${volume > 0 ? `${volume.toLocaleString('pt-BR')} kg` : '—'}</div>
+            <div class="modal__summary-stat-label">Volume</div>
+          </div>
+          <div class="modal__summary-stat">
+            <div class="modal__summary-stat-icon">${icon('check', { size: 16, color: 'var(--sf-text-muted)', strokeWidth: 2.5 })}</div>
+            <div class="modal__summary-stat-val">${setsDone}/${totalSets}</div>
+            <div class="modal__summary-stat-label">Séries</div>
+          </div>
+          <div class="modal__summary-stat">
+            <div class="modal__summary-stat-icon">${icon('list', { size: 16, color: 'var(--sf-text-muted)' })}</div>
+            <div class="modal__summary-stat-val">${exDone}${skipped > 0 ? ` · ${skipped} ${icon('alert', { size: 11, color: 'var(--sf-accent)' })}` : ''}</div>
+            <div class="modal__summary-stat-label">${skipped > 0 ? 'Feitos · pulados' : 'Exercícios'}</div>
+          </div>
+        </div>
+
+        ${result.fullyCompleted ? `
+          <div class="modal__summary-bonus">
+            ${icon('sparkle', { size: 14, color: 'var(--sf-accent)', fill: 'var(--sf-accent)' })}
+            Treino 100% concluído — bônus de XP aplicado
+          </div>` : ''}
+
+        <button class="btn btn--primary btn--lg" data-action="dismiss">
+          Continuar
+          ${icon('arrow-right', { size: 16, color: '#fff' })}
+        </button>
+      </div>
+    </div>`;
+    host.insertAdjacentHTML('beforeend', html);
+    const node = host.lastElementChild;
+    requestAnimationFrame(() => node.classList.add('is-visible'));
+
+    const onKey = (e) => { if (e.key === 'Escape') dismiss(); };
+    const dismiss = () => {
+      document.removeEventListener('keydown', onKey);
+      close(node, resolve);
+    };
+    document.addEventListener('keydown', onKey);
+    node.querySelector('[data-action="dismiss"]').addEventListener('click', dismiss);
+    node.querySelector('.modal__backdrop').addEventListener('click', dismiss);
+  });
+}
+
 export function showVideo({ title, url }) {
   const embed = youtubeEmbedUrl(url);
   if (!embed) {

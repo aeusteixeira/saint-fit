@@ -190,6 +190,22 @@ export function completeWorkout({ workout, session, plan }) {
       date: now.toISOString(),
       xpEarned,
       fullyCompleted,
+      durationSec: (() => {
+        const started = session?.date ? new Date(session.date).getTime() : null;
+        if (!started || isNaN(started)) return null;
+        return Math.max(0, Math.round((now.getTime() - started) / 1000));
+      })(),
+      // Histórico per-exercício pra lookup futuro (último peso, PR, etc.)
+      exercises: session.completed.map(c => {
+        const ex = workout.exercises.find(e => e.id === c.exerciseId);
+        return {
+          name: ex?.name || c.exerciseId,
+          weight: c.weight ?? null,
+          setsDone: c.setsDone ?? 0,
+          sets: ex?.sets || 0,
+          skipped: !!c.skipped,
+        };
+      }),
     },
     ...progress.sessions,
   ];

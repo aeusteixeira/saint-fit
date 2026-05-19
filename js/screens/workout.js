@@ -4,10 +4,12 @@
 //   - list: lista de todos exercícios com checkboxes (modo original)
 // Toggle via ?view=list na URL.
 import { icon } from '../icons.js';
-import { getTodayWorkout, getSession, setSession, startSession, getPlan, getProgress, isTodayCompleted, getTodaySessionRecord } from '../state.js';
+import { getTodayWorkout, getSession, setSession, startSession, getPlan, getProgress, isTodayCompleted, getTodaySessionRecord, getLastWeight, getPRWeight } from '../state.js';
 import { completeWorkout } from '../progress-engine.js';
-import { showQueue, showVideo } from '../modals.js';
+import { showQueue, showVideo, showWorkoutSummary } from '../modals.js';
 import { getVideoFor } from '../exercise-videos.js';
+import { getFormCue, getSubstitutes } from '../exercise-extras.js';
+import { acquireWakeLock, releaseWakeLock, vibrate, HAPTIC } from '../device.js';
 
 // ─────────────────────────────────────────────────────────────
 // Helpers de URL
@@ -102,15 +104,26 @@ export function renderWorkout(root) {
 function renderGuidedMode(root, ctx) {
   const { workout, session } = ctx;
 
-  // UI state local (não persiste — descanso/expansão é em-sessão)
+  // Wake Lock — mantém a tela acordada durante o treino (sem usuário precisar
+  // tocar pra desbloquear entre séries).
+  acquireWakeLock();
+
+  // Inicializa estado de rest a partir da session (persistência cross-reload).
+  // Se restEndsAt salvo ainda está no futuro, retoma o countdown.
+  const persistedRestEnd = session.rest?.endsAt || 0;
+  const restStillActive = persistedRestEnd > Date.now();
+
   const ui = {
-    isResting: false,
-    restEndsAt: 0,
+    isResting: restStillActive,
+    restEndsAt: restStillActive ? persistedRestEnd : 0,
     restIntervalId: null,
     restJustFinished: false,
-    currentIndexOverride: null, // se set, sobrescreve auto-detect (jump entre exercícios)
-    showAllExercises: false,    // painel expansível com lista completa
+    currentIndexOverride: null,
+    showAllExercises: false,
+    cronIntervalId: null,
+    showSubstitutes: false,
   };
+  if (restStillActive) ui.restIntervalId = setInterval(tickRest, 250);
 
   function autoCurrentIndex() {
     // Pula sobre exercícios já feitos OU explicitamente pulados.
@@ -184,6 +197,9 @@ function renderGuidedMode(root, ctx) {
     if (durationSec <= 0) return;
     ui.isResting = true;
     ui.restEndsAt = Date.now() + durationSec * 1000;
+    // Persiste pro caso de reload no meio do descanso.
+    session.rest = { endsAt: ui.restEndsAt };
+    persist();
     if (ui.restIntervalId) clearInterval(ui.restIntervalId);
     ui.restIntervalId = setInterval(tickRest, 250);
     fullRender();
@@ -192,24 +208,33 @@ function renderGuidedMode(root, ctx) {
   function tickRest() {
     const left = Math.max(0, Math.ceil((ui.restEndsAt - Date.now()) / 1000));
     if (left <= 0) {
-      stopRest();
+      stopRest({ autoTriggered: true });
       return;
     }
     const el = document.querySelector('.rest__time');
     if (el) el.textContent = formatTime(left);
   }
 
-  function stopRest() {
+  function stopRest({ autoTriggered = false } = {}) {
     if (ui.restIntervalId) clearInterval(ui.restIntervalId);
     ui.restIntervalId = null;
     ui.isResting = false;
     ui.restJustFinished = true;
-    try { beep(); } catch {}
+    session.rest = null;
+    persist();
+    // Vibração + bip só quando o timer chega a 0 sozinho — se usuário pulou,
+    // ele já está olhando a tela, não precisa de buzz.
+    if (autoTriggered) {
+      vibrate(HAPTIC.restEnd);
+      try { beep(); } catch {}
+    }
     fullRender();
   }
 
   function addRestSeconds(sec) {
     ui.restEndsAt += sec * 1000;
+    session.rest = { endsAt: ui.restEndsAt };
+    persist();
     const left = Math.max(0, Math.ceil((ui.restEndsAt - Date.now()) / 1000));
     const el = document.querySelector('.rest__time');
     if (el) el.textContent = formatTime(left);
@@ -235,11 +260,14 @@ function renderGuidedMode(root, ctx) {
     entry.setsDone = Math.min(ex.sets, entry.setsDone + 1);
     if (entry.setsDone >= ex.sets) {
       entry.done = true;
-      ui.currentIndexOverride = null; // exercício terminado, libera auto-detect
+      ui.currentIndexOverride = null;
     }
     persist();
 
-    // Próximo exercício ou descanso entre séries
+    // Feedback tátil + animação visual de confirmação
+    vibrate(HAPTIC.setDone);
+    flashSetComplete();
+
     const allSetsOfExDone = entry.setsDone >= ex.sets;
     if (allSetsOfExDone || skipRest) {
       ui.restJustFinished = false;
@@ -249,6 +277,17 @@ function renderGuidedMode(root, ctx) {
     }
   }
 
+  // Animação curta de checkmark grande no centro da tela
+  function flashSetComplete() {
+    const flash = document.createElement('div');
+    flash.className = 'set-flash';
+    flash.innerHTML = `<div class="set-flash__icon">${icon('check', { size: 56, color: '#fff', strokeWidth: 3 })}</div>`;
+    document.body.appendChild(flash);
+    requestAnimationFrame(() => flash.classList.add('is-in'));
+    setTimeout(() => flash.classList.add('is-out'), 320);
+    setTimeout(() => flash.remove(), 640);
+  }
+
   function goNextExercise() {
     ui.currentIndexOverride = null;
     ui.restJustFinished = false;
@@ -256,7 +295,14 @@ function renderGuidedMode(root, ctx) {
   }
 
   async function finishWorkout() {
+    const startedAt = new Date(session.date).getTime();
+    const durationSec = Math.max(0, Math.round((Date.now() - startedAt) / 1000));
     const result = completeWorkout({ workout, session, plan: getPlan() });
+
+    // 1) Sumário do treino primeiro (sempre)
+    await showWorkoutSummary({ workout, session, result, durationSec });
+
+    // 2) Depois: level-up e badges (se houver)
     const queue = [];
     if (result.leveledUp) {
       queue.push({ type: 'levelup', newLevel: result.newLevel, totalXp: getProgress().totalXp });
@@ -264,12 +310,8 @@ function renderGuidedMode(root, ctx) {
     for (const badge of result.newBadges || []) {
       queue.push({ type: 'badge', badge, xpEarned: result.xpEarned });
     }
-    if (queue.length === 0) {
-      showCompletionToast(result);
-      setTimeout(() => { window.location.hash = '#/'; }, 800);
-      return;
-    }
-    await showQueue(queue);
+    if (queue.length > 0) await showQueue(queue);
+
     window.location.hash = '#/';
   }
 
@@ -289,6 +331,9 @@ function renderGuidedMode(root, ctx) {
     const setsDoneTotal = session.completed.reduce((s, c) => s + c.setsDone, 0);
     const overallPct = totalSets > 0 ? Math.round((setsDoneTotal / totalSets) * 100) : 0;
 
+    const sessionStart = new Date(session.date).getTime();
+    const elapsedSec = Math.max(0, Math.floor((Date.now() - sessionStart) / 1000));
+
     root.innerHTML = `
       <div class="workout-topbar workout-topbar--guided">
         <button class="icon-btn" data-action="back" aria-label="Voltar">
@@ -296,7 +341,9 @@ function renderGuidedMode(root, ctx) {
         </button>
         <div class="workout-topbar__body">
           <span class="workout-topbar__title">TREINO ${workout.id}</span>
-          <div class="workout-topbar__sub">Exercício ${Math.min(idx + 1, total)} de ${total} · ${overallPct}%</div>
+          <div class="workout-topbar__sub">
+            <span class="workout-cron">${formatTime(elapsedSec)}</span> · Ex. ${Math.min(idx + 1, total)}/${total} · ${overallPct}%
+          </div>
         </div>
         <a class="icon-btn" href="${workoutBaseHash(workout.id)}&view=list" aria-label="Ver lista" title="Ver lista">
           ${icon('list', { size: 18, color: 'var(--sf-text)' })}
@@ -346,6 +393,16 @@ function renderGuidedMode(root, ctx) {
   }
 
   function bindEvents() {
+    // Cronômetro: tick a cada segundo só atualizando o textContent do span,
+    // sem re-renderizar a tela inteira.
+    if (ui.cronIntervalId) clearInterval(ui.cronIntervalId);
+    ui.cronIntervalId = setInterval(() => {
+      const el = document.querySelector('.workout-cron');
+      if (!el) return;
+      const start = new Date(session.date).getTime();
+      el.textContent = formatTime(Math.max(0, Math.floor((Date.now() - start) / 1000)));
+    }, 1000);
+
     root.querySelector('[data-action="back"]')?.addEventListener('click', () => {
       window.location.hash = '#/';
     });
@@ -404,6 +461,8 @@ function renderGuidedMode(root, ctx) {
   // Cleanup chamado pelo router quando sair da rota
   return () => {
     if (ui.restIntervalId) clearInterval(ui.restIntervalId);
+    if (ui.cronIntervalId) clearInterval(ui.cronIntervalId);
+    releaseWakeLock();
   };
 }
 
@@ -471,6 +530,21 @@ function renderCurrentExerciseCard({ ex, entry, idx, total, nextEx, exerciseFull
   }).join('');
 
   const repsLabel = ex.reps === 'max' ? 'máx. repetições' : `${ex.reps} repetições`;
+  const formCue = getFormCue(ex.name);
+  const lastW = getLastWeight(ex.name);
+  const prW = getPRWeight(ex.name);
+  const isPR = entry.weight != null && prW?.weight != null && entry.weight > prW.weight;
+
+  function formatRelativeDate(iso) {
+    if (!iso) return '';
+    const d = new Date(iso);
+    const days = Math.floor((Date.now() - d.getTime()) / 86400000);
+    if (days <= 0) return 'hoje';
+    if (days === 1) return 'ontem';
+    if (days < 7)  return `${days}d atrás`;
+    if (days < 30) return `${Math.floor(days/7)}sem atrás`;
+    return `${Math.floor(days/30)}mês atrás`;
+  }
 
   return `
     <div class="guided-card">
@@ -480,6 +554,8 @@ function renderCurrentExerciseCard({ ex, entry, idx, total, nextEx, exerciseFull
       </div>
       <h1 class="guided-card__name">${ex.name}</h1>
       <div class="guided-card__equip">${ex.equipment}</div>
+
+      ${formCue ? `<div class="guided-card__cue">${icon('alert', { size: 12, color: 'var(--sf-primary)' })} <span>${formCue}</span></div>` : ''}
 
       ${ex.image ? `
         <div class="guided-card__media">
@@ -515,6 +591,12 @@ function renderCurrentExerciseCard({ ex, entry, idx, total, nextEx, exerciseFull
           />
           <span>kg</span>
         </div>
+        ${(lastW || prW) ? `
+          <div class="guided-card__history">
+            ${lastW ? `<span class="history-chip">Última: <strong>${lastW.weight} kg</strong> · ${formatRelativeDate(lastW.date)}</span>` : ''}
+            ${prW ? `<span class="history-chip history-chip--pr">${icon('trophy', { size: 11, color: 'var(--sf-accent)' })} PR: <strong>${prW.weight} kg</strong></span>` : ''}
+            ${isPR ? `<span class="history-chip history-chip--new-pr">🔥 NOVO RECORDE!</span>` : ''}
+          </div>` : ''}
       </div>
 
       ${nextEx ? `
