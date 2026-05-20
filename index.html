@@ -4,6 +4,17 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
 
+  <!-- Google tag (gtag.js) -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-Q58YBJZD31"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    // send_page_view=false → o router envia manualmente em cada rota
+    // (hash routing não dispara pageview automático).
+    gtag('config', 'G-Q58YBJZD31', { send_page_view: false });
+  </script>
+
   <!-- Primary meta -->
   <title>Saint Fit — Treino de academia com plano ABC e progresso</title>
   <meta name="description" content="Saint Fit é um PWA gratuito de treino com plano ABC personalizado, XP, streak e vídeos de execução em português. Funciona offline, instala na tela inicial." />

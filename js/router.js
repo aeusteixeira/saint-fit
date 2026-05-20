@@ -71,6 +71,19 @@ function dispatch() {
 
   viewEl.scrollTop = 0;
   window.scrollTo({ top: 0 });
+
+  // GA4 SPA tracking — manda page_view manual em cada navegação interna.
+  // O gtag('config', ..., { send_page_view: false }) no index.html desliga o
+  // pageview automático, então sem isso o GA4 só vê a 1ª carga.
+  if (typeof window.gtag === 'function') {
+    try {
+      window.gtag('event', 'page_view', {
+        page_path: path,
+        page_title: document.title,
+        page_location: window.location.href,
+      });
+    } catch {}
+  }
 }
 
 export function navigate(hash) {
