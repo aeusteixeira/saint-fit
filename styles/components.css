@@ -719,6 +719,80 @@
   font-weight: 600;
 }
 
+/* ── Release note modal (one-shot announcement) */
+.modal--release { padding: 0 20px; }
+.modal__release-card {
+  --accent: var(--sf-primary);
+  position: relative;
+  width: 100%;
+  max-width: 400px;
+  border-radius: var(--sf-radius-modal);
+  background: linear-gradient(180deg, #1A1A1A 0%, #0F0F0F 100%);
+  border: 1.5px solid var(--accent);
+  box-shadow:
+    0 0 60px rgba(123, 47, 190, 0.4),
+    0 30px 60px rgba(0, 0, 0, 0.6);
+  padding: 28px 22px 22px;
+  text-align: center;
+  transform: scale(0.88);
+  transition: transform 280ms cubic-bezier(0.18, 0.89, 0.32, 1.28);
+}
+.modal.is-visible .modal__release-card { transform: scale(1); }
+.modal__release-icon {
+  font-size: 44px;
+  line-height: 1;
+  margin-bottom: 14px;
+  filter: drop-shadow(0 6px 16px rgba(123,47,190,0.5));
+}
+.modal__release-tag {
+  display: inline-block;
+  padding: 4px 12px;
+  border-radius: 999px;
+  background: var(--sf-primary);
+  color: #fff;
+  font-size: 10.5px;
+  font-weight: 800;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  margin-bottom: 12px;
+}
+.modal__release-title {
+  font-family: var(--sf-body);
+  font-size: 22px;
+  font-weight: 700;
+  color: #fff;
+  margin: 0 0 12px;
+  line-height: 1.25;
+}
+.modal__release-body {
+  font-size: 14px;
+  line-height: 1.55;
+  color: var(--sf-text-muted);
+  margin: 0 0 16px;
+}
+.modal__release-body strong { color: #fff; font-weight: 700; }
+.modal__release-reassurance {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 10px 12px;
+  margin-bottom: 22px;
+  background: rgba(46, 204, 113, 0.08);
+  border: 1px solid rgba(46, 204, 113, 0.3);
+  border-radius: 10px;
+  font-size: 12.5px;
+  line-height: 1.5;
+  text-align: left;
+  color: rgba(255, 255, 255, 0.82);
+}
+.modal__release-reassurance svg { flex-shrink: 0; margin-top: 2px; }
+.modal__release-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  align-items: center;
+}
+
 /* ── About modal */
 .modal--about { padding: 0 16px; }
 .modal--about .modal__backdrop { background: rgba(0, 0, 0, 0.82); }

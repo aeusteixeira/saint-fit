@@ -353,6 +353,53 @@ export function showWorkoutSummary({ workout, session, result, durationSec }) {
   });
 }
 
+// ─────────────────────────────────────────────────────────────
+// Release note modal — anúncio one-shot ao abrir o app.
+// Resolve com a action escolhida (primaryAction string ou null se dispensou).
+// ─────────────────────────────────────────────────────────────
+export function showReleaseNote(note) {
+  return new Promise((resolve) => {
+    const host = ensureHost();
+    const html = `<div class="modal modal--release">
+      <div class="modal__backdrop"></div>
+      <div class="modal__release-card">
+        <div class="modal__release-icon">${note.icon || '✨'}</div>
+        <div class="modal__release-tag">Novidade</div>
+        <h2 class="modal__release-title">${note.title}</h2>
+        <p class="modal__release-body">${note.body}</p>
+        ${note.reassurance ? `
+          <div class="modal__release-reassurance">
+            ${icon('check', { size: 14, color: 'var(--sf-secondary)', strokeWidth: 2.5 })}
+            <span>${note.reassurance}</span>
+          </div>` : ''}
+        <div class="modal__release-actions">
+          <button class="btn btn--primary btn--lg" data-action="primary">
+            ${note.primaryCta || 'Continuar'}
+            ${icon('arrow-right', { size: 16, color: '#fff' })}
+          </button>
+          ${note.secondaryCta ? `
+            <button class="btn-link" data-action="dismiss">${note.secondaryCta}</button>
+          ` : ''}
+        </div>
+      </div>
+    </div>`;
+    host.insertAdjacentHTML('beforeend', html);
+    const node = host.lastElementChild;
+    requestAnimationFrame(() => node.classList.add('is-visible'));
+
+    const finish = (action) => {
+      document.removeEventListener('keydown', onKey);
+      close(node, () => resolve(action));
+    };
+    const onKey = (e) => { if (e.key === 'Escape') finish(null); };
+    document.addEventListener('keydown', onKey);
+
+    node.querySelector('[data-action="primary"]').addEventListener('click', () => finish(note.primaryAction || 'primary'));
+    node.querySelector('[data-action="dismiss"]')?.addEventListener('click', () => finish(null));
+    node.querySelector('.modal__backdrop').addEventListener('click', () => finish(null));
+  });
+}
+
 export function showVideo({ title, url }) {
   const embed = youtubeEmbedUrl(url);
   if (!embed) {
