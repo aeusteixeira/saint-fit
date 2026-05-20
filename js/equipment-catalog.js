@@ -11,6 +11,7 @@ export const IMG = {
   treadmill:         './assets/equipment/treadmill.jpg',
   bike:              './assets/equipment/bike.jpg',
   mat:               './assets/equipment/colchonete.webp',
+  abductor:          './assets/equipment/cadeira-abdutora.png',
 };
 
 export const EQUIPMENT = [
@@ -94,6 +95,15 @@ export const EQUIPMENT = [
     muscleGroups: ['core', 'funcional'],
     exerciseCount: 6,
     filter: ['todos', 'funcional'],
+  },
+  {
+    id: 'abductor',
+    name: 'Cadeira Abdutora',
+    brand: 'Kikos',
+    image: IMG.abductor,
+    muscleGroups: ['pernas', 'posterior'],
+    exerciseCount: 1,
+    filter: ['todos', 'pernas'],
   },
 ];
 

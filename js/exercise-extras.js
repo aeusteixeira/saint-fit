@@ -20,6 +20,7 @@ const FORM_CUES = {
   'Agachamento Livre':            'Joelhos acompanham a ponta do pé. Peito ereto, lombar neutra.',
   'Cadeira Extensora':            'Não trave o joelho no topo — contraia, segura 1s.',
   'Cadeira Flexora':              'Movimento controlado na descida. Quadril colado no banco.',
+  'Cadeira Abdutora':             'Tronco encostado no banco, movimento só dos quadris abrindo. Aperte o glúteo no fim.',
   'Stiff':                        'Lombar neutra, joelhos levemente flexionados, quadril pra trás.',
   'Mesa Flexora':                 'Quadril colado no banco. Não levante o tronco ao subir o peso.',
   'Plataforma Vibratória':        'Joelhos levemente flexionados. Mantenha o core engajado.',

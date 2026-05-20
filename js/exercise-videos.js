@@ -26,6 +26,7 @@ export const EXERCISE_VIDEOS = {
   'Plataforma Vibratória':    'https://www.youtube.com/watch?v=N4n6HlB1KxA',
   'Cadeira Extensora':        'https://www.youtube.com/watch?v=_MMk7gbuSDA',
   'Cadeira Flexora':          'https://www.youtube.com/watch?v=AFG0wxXmTH4',
+  'Cadeira Abdutora':         'https://www.youtube.com/watch?v=50qHGus1TZk',
   'Stiff':                    'https://www.youtube.com/watch?v=601YoPL6y6E',
   'Mesa Flexora':             'https://www.youtube.com/watch?v=sWSm1pWb3lw',
   'Caminhada Inclinada':      'https://www.youtube.com/watch?v=msGx6m-Q6Ro',

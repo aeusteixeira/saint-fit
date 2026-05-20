@@ -51,6 +51,7 @@ const CATALOG = {
       { name: 'Cadeira Flexora',   equipment: 'Cadeira Kikos',      image: IMG.legMachine,        sets: 3, reps: 12, muscleGroup: ['posterior'] },
       { name: 'Stiff',             equipment: 'Halteres',           image: IMG.dumbbells,         sets: 3, reps: 12, muscleGroup: ['posterior'],
         conflictsWith: ['spine'], replaceWith: { name: 'Mesa Flexora', equipment: 'Cadeira Kikos', image: IMG.legMachine, sets: 3, reps: 12, muscleGroup: ['posterior'] } },
+      { name: 'Cadeira Abdutora', equipment: 'Cadeira Kikos · abdutores', image: IMG.abductor,       sets: 3, reps: 15, muscleGroup: ['pernas', 'posterior'], adaptedFor: ['knee'] },
       { name: 'Caminhada Inclinada', equipment: 'Esteira',          image: IMG.treadmill,         sets: 1, reps: 'max', muscleGroup: ['cardio'] },
       { name: 'Bike Intervalado',   equipment: 'Bicicleta Ergom.',  image: IMG.bike,              sets: 1, reps: 'max', muscleGroup: ['cardio'] },
       { name: 'Ponte de Glúteo',    equipment: 'Colchonete',        image: IMG.mat,               sets: 3, reps: 15, muscleGroup: ['posterior', 'core'], adaptedFor: ['spine'], finisher: true },

@@ -24,6 +24,7 @@ const SHELL = [
   './assets/equipment/treadmill.jpg',
   './assets/equipment/bike.jpg',
   './assets/equipment/colchonete.webp',
+  './assets/equipment/cadeira-abdutora.png',
   // CSS
   './styles/tokens.css',
   './styles/base.css',
